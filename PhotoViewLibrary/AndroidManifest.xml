@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest package="uk.co.senab.photoview" xmlns:android="http://schemas.android.com/apk/res/android">
+<uses-sdk 
+    android:minSdkVersion="11"/>
+</manifest>
