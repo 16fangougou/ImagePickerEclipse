@@ -45,7 +45,7 @@ public class ImagePicker {
 
     private boolean multiMode = true;    //图片选择模式
     private int selectLimit = 9;         //最大选择图片数量
-    private boolean crop = true;         //裁剪
+    private boolean crop = false;         //裁剪
     private boolean showCamera = true;   //显示相机
     private boolean isSaveRectangle = false;  //裁剪后的图片是否是矩形，否者跟随裁剪框的形状
     private int outPutX = 800;           //裁剪保存宽度
@@ -57,8 +57,13 @@ public class ImagePicker {
     private File cropCacheFolder;
     public File takeImageFile;
     public Bitmap cropBitmap;
+    private boolean compress = true;	// 是否压缩图片
+    private int maxSize = 512;			// 压缩之后的最大大小 kb
+    private int maxWid = 1600;			// 压缩之后的最大宽度 px
+    private int maxHei = 1600;			// 压缩之后的最大高度 px
 
-    private ArrayList<ImageItem> mSelectedImages = new ArrayList<>();   //选中的图片集合
+	private ArrayList<ImageItem> mSelectedImages = new ArrayList<>();   //选中的图片集合
+    private ArrayList<ImageItem> mCompressedSelectedImages = new ArrayList<>();   //选中的图片压缩之后的集合
     private List<ImageFolder> mImageFolders;      //所有的图片文件夹
     private int mCurrentImageFolderPosition = 0;  //当前选中的文件夹位置 0表示所有图片
     private List<OnImageSelectedListener> mImageSelectedListeners;          // 图片选中的监听回调
@@ -95,7 +100,39 @@ public class ImagePicker {
         this.selectLimit = selectLimit;
     }
 
-    public boolean isCrop() {
+    public int getMaxSize() {
+		return maxSize;
+	}
+
+	public void setMaxSize(int maxSize) {
+		this.maxSize = maxSize;
+	}
+
+	public int getMaxWid() {
+		return maxWid;
+	}
+
+	public void setMaxWid(int maxWid) {
+		this.maxWid = maxWid;
+	}
+
+	public int getMaxHei() {
+		return maxHei;
+	}
+
+	public void setMaxHei(int maxHei) {
+		this.maxHei = maxHei;
+	}
+
+    public boolean isCompress() {
+		return compress;
+	}
+
+	public void setCompress(boolean compress) {
+		this.compress = compress;
+	}
+
+	public boolean isCrop() {
         return crop;
     }
 
@@ -215,6 +252,10 @@ public class ImagePicker {
 
     public ArrayList<ImageItem> getSelectedImages() {
         return mSelectedImages;
+    }
+    
+    public ArrayList<ImageItem> getCompressedSelectedImages(){
+		return mCompressedSelectedImages;
     }
 
     public void clearSelectedImages() {

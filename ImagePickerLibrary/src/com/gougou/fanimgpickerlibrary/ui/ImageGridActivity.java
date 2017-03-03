@@ -1,5 +1,6 @@
 package com.gougou.fanimgpickerlibrary.ui;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import com.gougou.fanimgpickerlibrary.DataHolder;
@@ -10,13 +11,16 @@ import com.gougou.fanimgpickerlibrary.adapter.ImageFolderAdapter;
 import com.gougou.fanimgpickerlibrary.adapter.ImageGridAdapter;
 import com.gougou.fanimgpickerlibrary.bean.ImageFolder;
 import com.gougou.fanimgpickerlibrary.bean.ImageItem;
+import com.gougou.fanimgpickerlibrary.utils.CompressPhotoUtils;
+import com.gougou.fanimgpickerlibrary.utils.CompressPhotoUtils.CompressCallBack;
 import com.gougou.fanimgpickerlibrary.view.FolderPopUpWindow;
 
 import android.Manifest;
 import android.annotation.SuppressLint;
+import android.app.ProgressDialog;
+import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
-import android.graphics.Bitmap;
 import android.os.Build;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
@@ -24,6 +28,7 @@ import android.support.v4.app.ActivityCompat;
 import android.util.Log;
 import android.view.Gravity;
 import android.view.View;
+import android.view.Window;
 import android.widget.AdapterView;
 import android.widget.Button;
 import android.widget.GridView;
@@ -43,6 +48,7 @@ public class ImageGridActivity extends ImageBaseActivity implements ImageDataSou
     public static final int REQUEST_PERMISSION_CAMERA = 0x02;
 
     private ImagePicker imagePicker;
+    private Context context;
 
     private boolean isOrigin = false;  //是否选中原图
     private GridView mGridView;  //图片展示控件
@@ -54,12 +60,14 @@ public class ImageGridActivity extends ImageBaseActivity implements ImageDataSou
     private FolderPopUpWindow mFolderPopupWindow;  //ImageSet的PopupWindow
     private List<ImageFolder> mImageFolders;   //所有的图片文件夹
     private ImageGridAdapter mImageGridAdapter;  //图片九宫格展示的适配器
+	private ProgressDialog progressDialog;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_image_grid);
 
+        context = this;
         imagePicker = ImagePicker.getInstance();
         imagePicker.clear();
         imagePicker.addOnImageSelectedListener(this);
@@ -93,6 +101,13 @@ public class ImageGridActivity extends ImageBaseActivity implements ImageDataSou
                 ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, REQUEST_PERMISSION_STORAGE);
             }
         }
+        
+        progressDialog = new ProgressDialog(this, ProgressDialog.THEME_DEVICE_DEFAULT_LIGHT);
+//        progressDialog.setTitle("压缩");
+        progressDialog.setMessage("正在压缩，请稍后...");
+        progressDialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
+        progressDialog.setCanceledOnTouchOutside(false);
+        progressDialog.setCancelable(false);
     }
 
     @SuppressLint("Override")
@@ -127,10 +142,29 @@ public class ImageGridActivity extends ImageBaseActivity implements ImageDataSou
             Intent intent = new Intent();
             intent.putExtra(ImagePicker.EXTRA_RESULT_ITEMS, imagePicker.getSelectedImages());
             setResult(ImagePicker.RESULT_CODE_ITEMS, intent);  //多选不允许裁剪裁剪，返回数据
-            finish();
+            // 需要压缩
+            int size = imagePicker.getSelectedImages().size();
+            Log.i("imagepicker", "id == R.id.btn_ok size = " + size);
+            List<String> imgList = new ArrayList<>();
+            for (int i = 0; i < size; i++) {
+            	imgList.add(imagePicker.getSelectedImages().get(i).path);
+			}
+//            progressDialog = ProgressDialog.show(context, null, "压缩处理中...");
+            progressDialog.show();
+            new CompressPhotoUtils().CompressPhoto(context, imgList, new CompressCallBack() {
+				@Override
+				public void success(List<String> list) {
+					for (int i = 0; i < list.size(); i++) {
+						imagePicker.getSelectedImages().get(i).path = list.get(i);
+					}
+					progressDialog.dismiss();
+					finish();
+				}
+			});
+            
         } else if (id == R.id.btn_dir) {
             if (mImageFolders == null) {
-                Log.i("ImageGridActivity", "您的手机没有图片");
+                Log.i("imagepicker", "ImageGridActivity 您的手机没有图片");
                 return;
             }
             //点击文件夹按钮
@@ -154,6 +188,8 @@ public class ImageGridActivity extends ImageBaseActivity implements ImageDataSou
             startActivityForResult(intent, ImagePicker.REQUEST_CODE_PREVIEW);
         } else if (id == R.id.btn_back) {
             //点击返回按钮
+        	Log.i("imagepicker", "//点击返回按钮");
+        	// 不需要压缩
             finish();
         }
     }
@@ -209,7 +245,26 @@ public class ImageGridActivity extends ImageBaseActivity implements ImageDataSou
                 Intent intent = new Intent();
                 intent.putExtra(ImagePicker.EXTRA_RESULT_ITEMS, imagePicker.getSelectedImages());
                 setResult(ImagePicker.RESULT_CODE_ITEMS, intent);   //单选不需要裁剪，返回数据
-                finish();
+                Log.i("imagepicker", "//单选不需要裁剪，返回数据");
+                // 需要压缩
+                int size = imagePicker.getSelectedImages().size();
+                Log.i("imagepicker", "id == R.id.btn_ok size = " + size);
+                List<String> imgList = new ArrayList<>();
+                for (int i = 0; i < size; i++) {
+                	imgList.add(imagePicker.getSelectedImages().get(i).path);
+    			}
+//                progressDialog = ProgressDialog.show(context, null, "压缩处理中...");
+                progressDialog.show();
+                new CompressPhotoUtils().CompressPhoto(context, imgList, new CompressCallBack() {
+    				@Override
+    				public void success(List<String> list) {
+    					for (int i = 0; i < list.size(); i++) {
+    						imagePicker.getSelectedImages().get(i).path = list.get(i);
+    					}
+    					progressDialog.dismiss();
+    					finish();
+    				}
+    			});
             }
         }
     }
@@ -226,6 +281,9 @@ public class ImageGridActivity extends ImageBaseActivity implements ImageDataSou
             mBtnPre.setEnabled(false);
         }
         mBtnPre.setText(getResources().getString(R.string.preview_count, imagePicker.getSelectImageCount()));
+        /**
+         * 此处，选中图片后，在某些加载框架下，可能会出现闪烁情况，例如picasso。
+         */
         mImageGridAdapter.notifyDataSetChanged();
     }
 
@@ -259,14 +317,52 @@ public class ImageGridActivity extends ImageBaseActivity implements ImageDataSou
                             Intent intent = new Intent();
                             intent.putExtra(ImagePicker.EXTRA_RESULT_ITEMS, imagePicker.getSelectedImages());
                             setResult(ImagePicker.RESULT_CODE_ITEMS, intent);   //单选不需要裁剪，返回数据
-                            finish();
+                            Log.i("imagepicker", "//单选不需要裁剪，返回数据");
+                            // 需要压缩
+                            int size = imagePicker.getSelectedImages().size();
+                            Log.i("imagepicker", "id == R.id.btn_ok size = " + size);
+                            List<String> imgList = new ArrayList<>();
+                            for (int i = 0; i < size; i++) {
+                            	imgList.add(imagePicker.getSelectedImages().get(i).path);
+                			}
+//                            progressDialog = ProgressDialog.show(context, null, "压缩处理中...");
+                            progressDialog.show();
+                            new CompressPhotoUtils().CompressPhoto(context, imgList, new CompressCallBack() {
+                				@Override
+                				public void success(List<String> list) {
+                					for (int i = 0; i < list.size(); i++) {
+                						imagePicker.getSelectedImages().get(i).path = list.get(i);
+                					}
+                					progressDialog.dismiss();
+                					finish();
+                				}
+                			});
                         }
                     }
                 	
                 } else {
                     //说明是从裁剪页面过来的数据，直接返回就可以
                     setResult(ImagePicker.RESULT_CODE_ITEMS, data);
-                    finish();
+                    Log.i("imagepicker", "//说明是从裁剪页面过来的数据，直接返回就可以");
+                    // 需要压缩
+                    int size = imagePicker.getSelectedImages().size();
+                    Log.i("imagepicker", "id == R.id.btn_ok size = " + size);
+                    List<String> imgList = new ArrayList<>();
+                    for (int i = 0; i < size; i++) {
+                    	imgList.add(imagePicker.getSelectedImages().get(i).path);
+        			}
+//                    progressDialog = ProgressDialog.show(context, null, "压缩处理中...");
+                    progressDialog.show();
+                    new CompressPhotoUtils().CompressPhoto(context, imgList, new CompressCallBack() {
+        				@Override
+        				public void success(List<String> list) {
+        					for (int i = 0; i < list.size(); i++) {
+        						imagePicker.getSelectedImages().get(i).path = list.get(i);
+        					}
+        					progressDialog.dismiss();
+        					finish();
+        				}
+        			});
                 }
             }
         } else {
@@ -288,7 +384,26 @@ public class ImageGridActivity extends ImageBaseActivity implements ImageDataSou
                     Intent intent = new Intent();
                     intent.putExtra(ImagePicker.EXTRA_RESULT_ITEMS, imagePicker.getSelectedImages());
                     setResult(ImagePicker.RESULT_CODE_ITEMS, intent);   //单选不需要裁剪，返回数据
-                    finish();
+                    Log.i("imagepicker", "//单选不需要裁剪，返回数据");
+                 // 需要压缩
+                    int size = imagePicker.getSelectedImages().size();
+                    Log.i("imagepicker", "id == R.id.btn_ok size = " + size);
+                    List<String> imgList = new ArrayList<>();
+                    for (int i = 0; i < size; i++) {
+                    	imgList.add(imagePicker.getSelectedImages().get(i).path);
+        			}
+//                    progressDialog = ProgressDialog.show(context, null, "压缩处理中...");
+                    progressDialog.show();
+                    new CompressPhotoUtils().CompressPhoto(context, imgList, new CompressCallBack() {
+        				@Override
+        				public void success(List<String> list) {
+        					for (int i = 0; i < list.size(); i++) {
+        						imagePicker.getSelectedImages().get(i).path = list.get(i);
+        					}
+        					progressDialog.dismiss();
+        					finish();
+        				}
+        			});
                 }
             }
         }

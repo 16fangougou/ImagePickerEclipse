@@ -1,11 +1,13 @@
 package com.gougou.fanpickerimagetest.wxdemo;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
 import android.app.Activity;
 import android.content.Context;
 import android.support.v7.widget.RecyclerView;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -13,6 +15,7 @@ import android.widget.ImageView;
 
 import com.gougou.fanimgpickerlibrary.ImagePicker;
 import com.gougou.fanimgpickerlibrary.bean.ImageItem;
+import com.gougou.fanimgpickerlibrary.utils.FileUtil;
 import com.gougou.fanpickerimagetest.R;
 
 /**
@@ -24,7 +27,7 @@ import com.gougou.fanpickerimagetest.R;
  * 修订历史：微信图片选择的Adapter, 感谢 ikkong 的提交
  * ================================================
  */
-public class ImagePickerAdapter extends RecyclerView.Adapter<ImagePickerAdapter.SelectedPicViewHolder> {
+public class WxDemoAdapter extends RecyclerView.Adapter<WxDemoAdapter.SelectedPicViewHolder> {
     private int maxImgCount;
     private Context mContext;
     private List<ImageItem> mData;
@@ -57,7 +60,7 @@ public class ImagePickerAdapter extends RecyclerView.Adapter<ImagePickerAdapter.
         else return mData;
     }
 
-    public ImagePickerAdapter(Context mContext, List<ImageItem> data, int maxImgCount) {
+    public WxDemoAdapter(Context mContext, List<ImageItem> data, int maxImgCount) {
         this.mContext = mContext;
         this.maxImgCount = maxImgCount;
         this.mInflater = LayoutInflater.from(mContext);
@@ -99,6 +102,13 @@ public class ImagePickerAdapter extends RecyclerView.Adapter<ImagePickerAdapter.
                 clickPosition = WxDemoActivity.IMAGE_ITEM_ADD;
             } else {
                 ImagePicker.getInstance().getImageLoader().displayImage((Activity) mContext, item.path, iv_img, 0, 0);
+                try {
+					long size = FileUtil.getFileSizes(new File(item.path));
+					Log.i("imagepicker", "file.size = " + FileUtil.FormetFileSize(size));
+				} catch (Exception e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
                 clickPosition = position;
             }
         }
