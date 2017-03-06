@@ -14,6 +14,7 @@ import com.gougou.fanimgpickerlibrary.DataHolder;
 import com.gougou.fanimgpickerlibrary.ImagePicker;
 import com.gougou.fanimgpickerlibrary.bean.ImageItem;
 import com.gougou.fanimgpickerlibrary.ui.ImageGridActivity;
+import com.gougou.fanimgpickerlibrary.ui.ImageGridActivity2;
 import com.gougou.fanimgpickerlibrary.ui.ImagePreviewDelActivity;
 import com.gougou.fanimgpickerlibrary.view.CropImageView;
 import com.gougou.fanpickerimagetest.R;
@@ -87,7 +88,8 @@ public class WxDemoActivity extends AppCompatActivity implements WxDemoAdapter.O
             case IMAGE_ITEM_ADD:
                 //打开选择,本次允许选择的数量
                 ImagePicker.getInstance().setSelectLimit(maxImgCount - selImageList.size());
-                Intent intent = new Intent(this, ImageGridActivity.class);
+//                Intent intent = new Intent(this, ImageGridActivity.class);
+                Intent intent = new Intent(this, ImageGridActivity2.class);
                 startActivityForResult(intent, REQUEST_CODE_SELECT);
                 break;
             default:

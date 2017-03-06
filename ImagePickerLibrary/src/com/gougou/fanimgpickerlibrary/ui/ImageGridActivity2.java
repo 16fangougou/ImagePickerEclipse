@@ -13,14 +13,23 @@ import com.gougou.fanimgpickerlibrary.bean.ImageFolder;
 import com.gougou.fanimgpickerlibrary.bean.ImageItem;
 import com.gougou.fanimgpickerlibrary.utils.CompressPhotoUtils;
 import com.gougou.fanimgpickerlibrary.utils.CompressPhotoUtils.CompressCallBack;
+import com.gougou.fanimgpickerlibrary.utils.CompressServiceParam;
+import com.gougou.fanimgpickerlibrary.utils.Constanse;
+import com.gougou.fanimgpickerlibrary.utils.LGImgCompressor;
+import com.gougou.fanimgpickerlibrary.utils.LGImgCompressor.CompressListener;
+import com.gougou.fanimgpickerlibrary.utils.LGImgCompressor.CompressResult;
+import com.gougou.fanimgpickerlibrary.utils.LGImgCompressorService;
 import com.gougou.fanimgpickerlibrary.view.FolderPopUpWindow;
 
 import android.Manifest;
 import android.annotation.SuppressLint;
 import android.app.ProgressDialog;
+import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.pm.PackageManager;
+import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
@@ -42,7 +51,11 @@ import android.widget.GridView;
  * 修订历史：
  * ================================================
  */
-public class ImageGridActivity extends ImageBaseActivity implements ImageDataSource.OnImagesLoadedListener, ImageGridAdapter.OnImageItemClickListener, ImagePicker.OnImageSelectedListener, View.OnClickListener {
+public class ImageGridActivity2 extends ImageBaseActivity implements 
+		ImageDataSource.OnImagesLoadedListener,
+		ImageGridAdapter.OnImageItemClickListener, 
+		ImagePicker.OnImageSelectedListener, 
+		View.OnClickListener, CompressListener{
 
     public static final int REQUEST_PERMISSION_STORAGE = 0x01;
     public static final int REQUEST_PERMISSION_CAMERA = 0x02;
@@ -61,16 +74,22 @@ public class ImageGridActivity extends ImageBaseActivity implements ImageDataSou
     private List<ImageFolder> mImageFolders;   //所有的图片文件夹
     private ImageGridAdapter mImageGridAdapter;  //图片九宫格展示的适配器
 	private ProgressDialog progressDialog;
+	private List<String> selectedImgList;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_image_grid);
 
+        reciver = new CompressingReciver();
+        IntentFilter intentFilter = new IntentFilter(Constanse.ACTION_COMPRESS_BROADCAST);
+        registerReceiver(reciver, intentFilter);
+        
         context = this;
         imagePicker = ImagePicker.getInstance();
         imagePicker.clear();
         imagePicker.addOnImageSelectedListener(this);
+        selectedImgList = new ArrayList<String>();
 
         findViewById(R.id.btn_back).setOnClickListener(this);
         mBtnOk = (Button) findViewById(R.id.btn_ok);
@@ -109,6 +128,55 @@ public class ImageGridActivity extends ImageBaseActivity implements ImageDataSou
         progressDialog.setCanceledOnTouchOutside(false);
         progressDialog.setCancelable(false);
     }
+    
+    private CompressingReciver reciver;
+
+    private class CompressingReciver extends BroadcastReceiver {
+        @SuppressWarnings("unchecked")
+		@Override
+		public void onReceive(Context context, Intent intent) {
+			int flag = intent.getIntExtra(Constanse.KEY_COMPRESS_FLAG, -1);
+			/**
+			 * 开始压缩
+			 */
+			if (flag == Constanse.FLAG_BEGAIIN) {
+				if (progressDialog != null && !progressDialog.isShowing()) {
+					progressDialog.show();
+				}
+				return;
+			}
+			
+			/**
+			 * 压缩完成
+			 */
+			if (flag == Constanse.FLAG_END) {
+				if (progressDialog != null && progressDialog.isShowing()) {
+					progressDialog.dismiss();
+				}
+				ArrayList<LGImgCompressor.CompressResult> compressResults = (ArrayList<LGImgCompressor.CompressResult>) intent
+						.getSerializableExtra(Constanse.KEY_COMPRESS_RESULT);
+				/**
+				 * 矫正顺序，使压缩完成的数组顺序和选择的顺序一致
+				 */
+				imagePicker.clearSelectedImages();
+				for (int i = 0; i < selectedImgList.size(); i++) {
+					for (int j = 0; j < compressResults.size(); j++) {
+						if (selectedImgList.get(i).toString().equalsIgnoreCase(compressResults.get(j).getSrcPath().toString())) {
+							CompressResult item = compressResults.get(j);
+							ImageItem imageItem = new ImageItem();
+		                    imageItem.path = item.getOutPath().toString();
+		                    imagePicker.addSelectedImageItem(0, imageItem, true);
+						}
+					}
+				}
+				progressDialog.dismiss();
+				Intent i = new Intent();
+				i.putExtra(ImagePicker.EXTRA_RESULT_ITEMS, imagePicker.getSelectedImages());
+				ImageGridActivity2.this.setResult(ImagePicker.RESULT_CODE_ITEMS, i);
+				finish();
+			}
+		}
+    }
 
     @SuppressLint("Override")
 	@Override
@@ -131,8 +199,11 @@ public class ImageGridActivity extends ImageBaseActivity implements ImageDataSou
 
     @Override
     protected void onDestroy() {
+    	super.onDestroy();
         imagePicker.removeOnImageSelectedListener(this);
-        super.onDestroy();
+        if(reciver != null){
+            unregisterReceiver(reciver);
+        }
     }
 
     @Override
@@ -146,24 +217,9 @@ public class ImageGridActivity extends ImageBaseActivity implements ImageDataSou
             for (int i = 0; i < size; i++) {
             	imgList.add(imagePicker.getSelectedImages().get(i).path);
 			}
-            progressDialog.show();
-            new CompressPhotoUtils().CompressPhoto(context, imgList, new CompressCallBack() {
-				@Override
-				public void success(List<String> list) {
-					imagePicker.clearSelectedImages();
-					for (int i = 0; i < list.size(); i++) {
-						String path = list.get(i);
-						ImageItem imageItem = new ImageItem();
-                        imageItem.path = path;
-                        imagePicker.addSelectedImageItem(0, imageItem, true);
-					}
-					progressDialog.dismiss();
-					Intent intent = new Intent();
-					intent.putExtra(ImagePicker.EXTRA_RESULT_ITEMS, imagePicker.getSelectedImages());
-					setResult(ImagePicker.RESULT_CODE_ITEMS, intent);  //多选不允许裁剪裁剪，返回数据
-					finish();
-				}
-			});
+            selectedImgList = new ArrayList<String>();
+            selectedImgList = imgList;
+            startCompressImage(imgList);
             
         } else if (id == R.id.btn_dir) {
             if (mImageFolders == null) {
@@ -183,7 +239,7 @@ public class ImageGridActivity extends ImageBaseActivity implements ImageDataSou
                 mFolderPopupWindow.setSelection(index);
             }
         } else if (id == R.id.btn_preview) {
-            Intent intent = new Intent(ImageGridActivity.this, ImagePreviewActivity.class);
+            Intent intent = new Intent(ImageGridActivity2.this, ImagePreviewActivity.class);
             intent.putExtra(ImagePicker.EXTRA_SELECTED_IMAGE_POSITION, 0);
 //            intent.putExtra(ImagePicker.EXTRA_IMAGE_ITEMS, imagePicker.getSelectedImages());
             DataHolder.getInstance().save(DataHolder.DH_CURRENT_IMAGE_FOLDER_ITEMS, imagePicker.getSelectedImages());
@@ -233,7 +289,7 @@ public class ImageGridActivity extends ImageBaseActivity implements ImageDataSou
         //根据是否有相机按钮确定位置
         position = imagePicker.isShowCamera() ? position - 1 : position;
         if (imagePicker.isMultiMode()) {
-            Intent intent = new Intent(ImageGridActivity.this, ImagePreviewActivity.class);
+            Intent intent = new Intent(ImageGridActivity2.this, ImagePreviewActivity.class);
             intent.putExtra(ImagePicker.EXTRA_SELECTED_IMAGE_POSITION, position);
             DataHolder.getInstance().save(DataHolder.DH_CURRENT_IMAGE_FOLDER_ITEMS, imagePicker.getCurrentImageFolderItems());
             intent.putExtra(ImagePreviewActivity.ISORIGIN, isOrigin);
@@ -242,7 +298,7 @@ public class ImageGridActivity extends ImageBaseActivity implements ImageDataSou
             imagePicker.clearSelectedImages();
             imagePicker.addSelectedImageItem(position, imagePicker.getCurrentImageFolderItems().get(position), true);
             if (imagePicker.isCrop()) {
-                Intent intent = new Intent(ImageGridActivity.this, ImageCropActivity.class);
+                Intent intent = new Intent(ImageGridActivity2.this, ImageCropActivity.class);
                 startActivityForResult(intent, ImagePicker.REQUEST_CODE_CROP);  //单选需要裁剪，进入裁剪界面
             } else {
                 Log.i("imagepicker", "//单选不需要裁剪，返回数据");
@@ -253,24 +309,9 @@ public class ImageGridActivity extends ImageBaseActivity implements ImageDataSou
                 for (int i = 0; i < size; i++) {
                 	imgList.add(imagePicker.getSelectedImages().get(i).path);
     			}
-                progressDialog.show();
-                new CompressPhotoUtils().CompressPhoto(context, imgList, new CompressCallBack() {
-    				@Override
-    				public void success(List<String> list) {
-    					imagePicker.clearSelectedImages();
-    					for (int i = 0; i < list.size(); i++) {
-    						String path = list.get(i);
-    						ImageItem imageItem = new ImageItem();
-                            imageItem.path = path;
-                            imagePicker.addSelectedImageItem(0, imageItem, true);
-    					}
-    					progressDialog.dismiss();
-    					Intent intent = new Intent();
-    					intent.putExtra(ImagePicker.EXTRA_RESULT_ITEMS, imagePicker.getSelectedImages());
-    					setResult(ImagePicker.RESULT_CODE_ITEMS, intent);   //单选不需要裁剪，返回数据
-    					finish();
-    				}
-    			});
+                selectedImgList = new ArrayList<String>();
+                selectedImgList = imgList;
+                startCompressImage(imgList);
             }
         }
     }
@@ -317,7 +358,7 @@ public class ImageGridActivity extends ImageBaseActivity implements ImageDataSou
                         imagePicker.clearSelectedImages();
                         imagePicker.addSelectedImageItem(0, imageItem, true);
                         if (imagePicker.isCrop()) {
-                            Intent intent = new Intent(ImageGridActivity.this, ImageCropActivity.class);
+                            Intent intent = new Intent(ImageGridActivity2.this, ImageCropActivity.class);
                             startActivityForResult(intent, ImagePicker.REQUEST_CODE_CROP);  //单选需要裁剪，进入裁剪界面
                         } else {
                             Log.i("imagepicker", "//单选不需要裁剪，返回数据");
@@ -328,24 +369,9 @@ public class ImageGridActivity extends ImageBaseActivity implements ImageDataSou
                             for (int i = 0; i < size; i++) {
                             	imgList.add(imagePicker.getSelectedImages().get(i).path);
                 			}
-                            progressDialog.show();
-                            new CompressPhotoUtils().CompressPhoto(context, imgList, new CompressCallBack() {
-                				@Override
-                				public void success(List<String> list) {
-                					imagePicker.clearSelectedImages();
-                					for (int i = 0; i < list.size(); i++) {
-                						String path = list.get(i);
-                						ImageItem imageItem = new ImageItem();
-                                        imageItem.path = path;
-                                        imagePicker.addSelectedImageItem(0, imageItem, true);
-                					}
-                					progressDialog.dismiss();
-                					Intent intent = new Intent();
-                					intent.putExtra(ImagePicker.EXTRA_RESULT_ITEMS, imagePicker.getSelectedImages());
-                					setResult(ImagePicker.RESULT_CODE_ITEMS, intent);   //单选不需要裁剪，返回数据
-                					finish();
-                				}
-                			});
+                            selectedImgList = new ArrayList<String>();
+                            selectedImgList = imgList;
+                            startCompressImage(imgList);
                         }
                     }
                 	
@@ -359,24 +385,9 @@ public class ImageGridActivity extends ImageBaseActivity implements ImageDataSou
                     for (int i = 0; i < size; i++) {
                     	imgList.add(imagePicker.getSelectedImages().get(i).path);
         			}
-                    progressDialog.show();
-                    new CompressPhotoUtils().CompressPhoto(context, imgList, new CompressCallBack() {
-        				@Override
-        				public void success(List<String> list) {
-        					imagePicker.clearSelectedImages();
-        					for (int i = 0; i < list.size(); i++) {
-        						String path = list.get(i);
-        						ImageItem imageItem = new ImageItem();
-                                imageItem.path = path;
-                                imagePicker.addSelectedImageItem(0, imageItem, true);
-        					}
-        					Intent intent = new Intent();
-        					intent.putExtra(ImagePicker.EXTRA_IMAGE_ITEMS, imagePicker.getSelectedImages());
-        					setResult(ImagePicker.RESULT_CODE_ITEMS, intent);
-        					progressDialog.dismiss();	
-        					finish();
-        				}
-        			});
+                    selectedImgList = new ArrayList<String>();
+                    selectedImgList = imgList;
+                    startCompressImage(imgList);
                 }
             }
         } else {
@@ -392,7 +403,7 @@ public class ImageGridActivity extends ImageBaseActivity implements ImageDataSou
                 imagePicker.clearSelectedImages();
                 imagePicker.addSelectedImageItem(0, imageItem, true);
                 if (imagePicker.isCrop()) {
-                    Intent intent = new Intent(ImageGridActivity.this, ImageCropActivity.class);
+                    Intent intent = new Intent(ImageGridActivity2.this, ImageCropActivity.class);
                     startActivityForResult(intent, ImagePicker.REQUEST_CODE_CROP);  //单选需要裁剪，进入裁剪界面
                 } else {
                     Log.i("imagepicker", "//单选不需要裁剪，返回数据");
@@ -403,26 +414,47 @@ public class ImageGridActivity extends ImageBaseActivity implements ImageDataSou
                     for (int i = 0; i < size; i++) {
                     	imgList.add(imagePicker.getSelectedImages().get(i).path);
         			}
-                    progressDialog.show();
-                    new CompressPhotoUtils().CompressPhoto(context, imgList, new CompressCallBack() {
-        				@Override
-        				public void success(List<String> list) {
-        					imagePicker.clearSelectedImages();
-        					for (int i = 0; i < list.size(); i++) {
-        						String path = list.get(i);
-        						ImageItem imageItem = new ImageItem();
-                                imageItem.path = path;
-                                imagePicker.addSelectedImageItem(0, imageItem, true);
-        					}
-        					progressDialog.dismiss();
-        					Intent intent = new Intent();
-        					intent.putExtra(ImagePicker.EXTRA_RESULT_ITEMS, imagePicker.getSelectedImages());
-        					setResult(ImagePicker.RESULT_CODE_ITEMS, intent);   //单选不需要裁剪，返回数据
-        					finish();
-        				}
-        			});
+                    selectedImgList = new ArrayList<String>();
+                    selectedImgList = imgList;
+                    startCompressImage(imgList);
                 }
             }
         }
     }
+
+	@Override
+	public void onCompressStart() {
+		if (progressDialog != null && !progressDialog.isShowing()) {
+			progressDialog.show();
+		}
+	}
+
+	@Override
+	public void onCompressEnd(CompressResult imageOutPath) {
+		if (progressDialog != null && progressDialog.isShowing()) {
+			progressDialog.dismiss();
+		}
+	}
+	
+	private void startCompressImage(List<String> imgPathList){
+		ArrayList<Uri> compressFiles = new ArrayList<>();
+		for (int i = 0; i < imgPathList.size(); i++) {
+			compressFiles.add(Uri.parse(imgPathList.get(i).toString()));
+		}
+        Log.i("task...", "size2--->" + compressFiles.size());
+        ArrayList<CompressServiceParam> tasks = new ArrayList<CompressServiceParam>(compressFiles.size());
+
+        for (int i = 0; i < compressFiles.size(); ++i) {
+            Uri uri = compressFiles.get(i);
+            CompressServiceParam param = new CompressServiceParam();
+            param.setOutHeight(imagePicker.getMaxHei());
+            param.setOutWidth(imagePicker.getMaxWid());
+            param.setMaxFileSize(imagePicker.getMaxSize());
+            param.setSrcImageUri(uri.toString());
+            tasks.add(param);
+        }
+        Intent intent = new Intent(this, LGImgCompressorService.class);
+        intent.putParcelableArrayListExtra(Constanse.COMPRESS_PARAM, tasks);
+        startService(intent);
+	}
 }

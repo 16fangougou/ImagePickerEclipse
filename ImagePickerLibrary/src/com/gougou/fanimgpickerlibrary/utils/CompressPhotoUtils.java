@@ -11,7 +11,6 @@ import java.util.List;
 
 import com.gougou.fanimgpickerlibrary.ImagePicker;
 
-import android.app.ProgressDialog;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
