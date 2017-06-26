@@ -2,16 +2,13 @@ package com.gougou.fanpickerimagetest.imageloader;
 
 import java.io.File;
 
+import com.bumptech.glide.Glide;
+import com.bumptech.glide.load.engine.DiskCacheStrategy;
+import com.gougou.fanimgpickerlibrary.loader.ImageLoader;
+
 import android.app.Activity;
 import android.net.Uri;
 import android.widget.ImageView;
-
-import com.bumptech.glide.Glide;
-import com.bumptech.glide.load.engine.DiskCacheStrategy;
-import com.gougou.fanimgpickerlibrary.ImagePicker;
-import com.gougou.fanimgpickerlibrary.loader.ImageLoader;
-import com.gougou.fanimgpickerlibrary.utils.FileUtil;
-import com.gougou.fanpickerimagetest.R;
 
 /**
  * ================================================

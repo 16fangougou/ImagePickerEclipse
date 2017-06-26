@@ -1,9 +1,9 @@
 package com.gougou.fanimgpickerlibrary.loader;
 
+import java.io.Serializable;
+
 import android.app.Activity;
 import android.widget.ImageView;
-
-import java.io.Serializable;
 
 /**
  * ================================================

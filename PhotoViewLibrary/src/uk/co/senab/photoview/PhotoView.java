@@ -24,7 +24,6 @@ import android.net.Uri;
 import android.util.AttributeSet;
 import android.view.GestureDetector;
 import android.widget.ImageView;
-
 import uk.co.senab.photoview.PhotoViewAttacher.OnMatrixChangedListener;
 import uk.co.senab.photoview.PhotoViewAttacher.OnPhotoTapListener;
 import uk.co.senab.photoview.PhotoViewAttacher.OnViewTapListener;

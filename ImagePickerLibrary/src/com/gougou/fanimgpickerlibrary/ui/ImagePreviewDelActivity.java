@@ -5,12 +5,10 @@ import com.gougou.fanimgpickerlibrary.R;
 
 import android.content.DialogInterface;
 import android.content.Intent;
-import android.os.Build;
 import android.os.Bundle;
 import android.support.v4.view.ViewPager;
 import android.support.v7.app.AlertDialog;
 import android.view.View;
-import android.view.animation.AnimationUtils;
 import android.widget.ImageView;
 
 /**

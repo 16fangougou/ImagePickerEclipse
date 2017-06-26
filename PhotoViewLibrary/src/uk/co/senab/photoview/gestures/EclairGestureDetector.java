@@ -18,7 +18,6 @@ package uk.co.senab.photoview.gestures;
 import android.annotation.TargetApi;
 import android.content.Context;
 import android.view.MotionEvent;
-
 import uk.co.senab.photoview.Compat;
 
 @TargetApi(5)

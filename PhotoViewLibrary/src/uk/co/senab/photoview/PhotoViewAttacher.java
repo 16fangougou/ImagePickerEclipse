@@ -15,6 +15,12 @@
  *******************************************************************************/
 package uk.co.senab.photoview;
 
+import static android.view.MotionEvent.ACTION_CANCEL;
+import static android.view.MotionEvent.ACTION_DOWN;
+import static android.view.MotionEvent.ACTION_UP;
+
+import java.lang.ref.WeakReference;
+
 import android.annotation.SuppressLint;
 import android.content.Context;
 import android.graphics.Bitmap;
@@ -35,17 +41,10 @@ import android.view.animation.AccelerateDecelerateInterpolator;
 import android.view.animation.Interpolator;
 import android.widget.ImageView;
 import android.widget.ImageView.ScaleType;
-
-import java.lang.ref.WeakReference;
-
 import uk.co.senab.photoview.gestures.OnGestureListener;
 import uk.co.senab.photoview.gestures.VersionedGestureDetector;
 import uk.co.senab.photoview.log.LogManager;
 import uk.co.senab.photoview.scrollerproxy.ScrollerProxy;
-
-import static android.view.MotionEvent.ACTION_CANCEL;
-import static android.view.MotionEvent.ACTION_DOWN;
-import static android.view.MotionEvent.ACTION_UP;
 
 public class PhotoViewAttacher implements IPhotoView, View.OnTouchListener,
         OnGestureListener,
