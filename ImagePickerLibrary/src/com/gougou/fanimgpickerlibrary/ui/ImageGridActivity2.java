@@ -11,9 +11,7 @@ import com.gougou.fanimgpickerlibrary.adapter.ImageFolderAdapter;
 import com.gougou.fanimgpickerlibrary.adapter.ImageGridAdapter;
 import com.gougou.fanimgpickerlibrary.bean.ImageFolder;
 import com.gougou.fanimgpickerlibrary.bean.ImageItem;
-import com.gougou.fanimgpickerlibrary.utils.CompressPhotoUtils;
-import com.gougou.fanimgpickerlibrary.utils.CompressPhotoUtils.CompressCallBack;
-import com.gougou.fanimgpickerlibrary.utils.CompressServiceParam;
+import com.gougou.fanimgpickerlibrary.utils.LGCompressServiceParam;
 import com.gougou.fanimgpickerlibrary.utils.Constanse;
 import com.gougou.fanimgpickerlibrary.utils.LGImgCompressor;
 import com.gougou.fanimgpickerlibrary.utils.LGImgCompressor.CompressListener;
@@ -442,11 +440,11 @@ public class ImageGridActivity2 extends ImageBaseActivity implements
 			compressFiles.add(Uri.parse(imgPathList.get(i).toString()));
 		}
         Log.i("task...", "size2--->" + compressFiles.size());
-        ArrayList<CompressServiceParam> tasks = new ArrayList<CompressServiceParam>(compressFiles.size());
+        ArrayList<LGCompressServiceParam> tasks = new ArrayList<LGCompressServiceParam>(compressFiles.size());
 
         for (int i = 0; i < compressFiles.size(); ++i) {
             Uri uri = compressFiles.get(i);
-            CompressServiceParam param = new CompressServiceParam();
+            LGCompressServiceParam param = new LGCompressServiceParam();
             param.setOutHeight(imagePicker.getMaxHei());
             param.setOutWidth(imagePicker.getMaxWid());
             param.setMaxFileSize(imagePicker.getMaxSize());

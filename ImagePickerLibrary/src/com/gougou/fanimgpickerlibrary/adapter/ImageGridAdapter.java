@@ -7,7 +7,7 @@ import com.gougou.fanimgpickerlibrary.R;
 import com.gougou.fanimgpickerlibrary.Utils;
 import com.gougou.fanimgpickerlibrary.bean.ImageItem;
 import com.gougou.fanimgpickerlibrary.ui.ImageBaseActivity;
-import com.gougou.fanimgpickerlibrary.ui.ImageGridActivity;
+import com.gougou.fanimgpickerlibrary.ui.ImageGridActivity2;
 import com.gougou.fanimgpickerlibrary.view.SuperCheckBox;
 
 import android.Manifest;
@@ -102,7 +102,7 @@ public class ImageGridAdapter extends BaseAdapter {
                 @Override
                 public void onClick(View v) {
                     if (!((ImageBaseActivity) mActivity).checkPermission(Manifest.permission.CAMERA)) {
-                        ActivityCompat.requestPermissions(mActivity, new String[]{Manifest.permission.CAMERA}, ImageGridActivity.REQUEST_PERMISSION_CAMERA);
+                        ActivityCompat.requestPermissions(mActivity, new String[]{Manifest.permission.CAMERA}, ImageGridActivity2.REQUEST_PERMISSION_CAMERA);
                     } else {
                         imagePicker.takePicture(mActivity, ImagePicker.REQUEST_CODE_TAKE);
                     }

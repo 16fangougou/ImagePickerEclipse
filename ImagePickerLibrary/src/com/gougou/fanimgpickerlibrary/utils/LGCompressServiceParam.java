@@ -3,32 +3,32 @@ package com.gougou.fanimgpickerlibrary.utils;
 import android.os.Parcel;
 import android.os.Parcelable;
 
-public class CompressServiceParam implements Parcelable {
+public class LGCompressServiceParam implements Parcelable {
 
     private int outWidth;
     private int outHeight;
     private int maxFileSize;
     private String srcImageUri;
 
-    public CompressServiceParam() {
+    public LGCompressServiceParam() {
     }
 
-    protected CompressServiceParam(Parcel in) {
+    protected LGCompressServiceParam(Parcel in) {
         outWidth = in.readInt();
         outHeight = in.readInt();
         maxFileSize = in.readInt();
         srcImageUri = in.readString();
     }
 
-    public static final Creator<CompressServiceParam> CREATOR = new Creator<CompressServiceParam>() {
+    public static final Creator<LGCompressServiceParam> CREATOR = new Creator<LGCompressServiceParam>() {
         @Override
-        public CompressServiceParam createFromParcel(Parcel in) {
-            return new CompressServiceParam(in);
+        public LGCompressServiceParam createFromParcel(Parcel in) {
+            return new LGCompressServiceParam(in);
         }
 
         @Override
-        public CompressServiceParam[] newArray(int size) {
-            return new CompressServiceParam[size];
+        public LGCompressServiceParam[] newArray(int size) {
+            return new LGCompressServiceParam[size];
         }
     };
 

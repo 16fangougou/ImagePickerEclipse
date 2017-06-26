@@ -50,7 +50,7 @@ public class LGImgCompressorService extends Service {
     private final Object lock = new Object();
 
     private void doCompressImages(final Intent intent,final int taskId){
-        final ArrayList<CompressServiceParam> paramArrayList = intent.getParcelableArrayListExtra(Constanse.COMPRESS_PARAM);
+        final ArrayList<LGCompressServiceParam> paramArrayList = intent.getParcelableArrayListExtra(Constanse.COMPRESS_PARAM);
         synchronized (lock){
             taskNumber += paramArrayList.size();
         }
@@ -66,10 +66,10 @@ public class LGImgCompressorService extends Service {
     }
 
     private class CompressTask implements Runnable{
-        private CompressServiceParam param;
+        private LGCompressServiceParam param;
         private int taskId ;
 
-        private CompressTask(CompressServiceParam compressServiceParam,int taskId){
+        private CompressTask(LGCompressServiceParam compressServiceParam,int taskId){
             this.param = compressServiceParam;
             this.taskId = taskId;
         }

@@ -2,6 +2,14 @@ package com.gougou.fanpickerimagetest.wxdemo;
 
 import java.util.ArrayList;
 
+import com.gougou.fanimgpickerlibrary.DataHolder;
+import com.gougou.fanimgpickerlibrary.ImagePicker;
+import com.gougou.fanimgpickerlibrary.bean.ImageItem;
+import com.gougou.fanimgpickerlibrary.ui.ImageGridActivity2;
+import com.gougou.fanimgpickerlibrary.ui.ImagePreviewDelActivity;
+import com.gougou.fanpickerimagetest.R;
+import com.gougou.fanpickerimagetest.imageloader.GlideImageLoader;
+
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
@@ -9,16 +17,6 @@ import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.view.View;
-
-import com.gougou.fanimgpickerlibrary.DataHolder;
-import com.gougou.fanimgpickerlibrary.ImagePicker;
-import com.gougou.fanimgpickerlibrary.bean.ImageItem;
-import com.gougou.fanimgpickerlibrary.ui.ImageGridActivity;
-import com.gougou.fanimgpickerlibrary.ui.ImageGridActivity2;
-import com.gougou.fanimgpickerlibrary.ui.ImagePreviewDelActivity;
-import com.gougou.fanimgpickerlibrary.view.CropImageView;
-import com.gougou.fanpickerimagetest.R;
-import com.gougou.fanpickerimagetest.imageloader.GlideImageLoader;
 
 /**
  * ================================================
